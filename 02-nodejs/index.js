@@ -43,44 +43,74 @@ function obterEndereco(idUsuario, callback) {
 	}, 2000);
 }
 
-const usuarioPromise = obterUsuario();
-// para manipular o sucesso usammos a função .then
-// para manipular erros, usamos o .catch
-// usuario -> telefone ->
-usuarioPromise
-	.then(function (usuario) {
-		return obterTelefone(usuario.id)
-			.then(function resolverTelefone(result) {
-				return {
-					usuario: {
-						nome: usuario.nome,
-						id: usuario.id
-					},
-					telefone: result
-				}
-			});
-	})
-	.then(function (resultado) {
-		const endereco = obterEnderecoAsync(resultado.usuario.id);
-		return endereco.then(function resolverEndereco(result) {
-			return {
-				usuario: resultado.usuario,
-				telefone: resultado.telefone,
-				endereco: result
-			}
-		})
-		
-	})
-	.then(function (resultado) {
+// 1º passo adicionar a palavra async -> automaticamente ela retornará uma Promise
+main()
+async function main() {
+	try {
+		console.time('medida-promise');
+		const usuario = await obterUsuario();
+		// const telefone = await obterTelefone(usuario.id);
+		// const endereco = await obterEnderecoAsync(usuario.id);
+		const resultado = await Promise.all([
+			obterTelefone(usuario.id),
+			obterEnderecoAsync(usuario.id)
+		]);
+		const endereco = resultado[1];
+		const telefone = resultado[0];
+
 		console.log(`
-			Nome: ${resultado.usuario.nome}
-			Endereco: ${resultado.endereco.rua}, ${resultado.endereco.numero}
-			Telefone: (${resultado.telefone.ddd}) ${resultado.telefone.telefone}
+			Nome: ${usuario.nome},
+			Endereço: ${endereco.rua}, ${endereco.numero}
+			Telefone: (${telefone.ddd}) ${telefone.telefone}
 		`);
-	})
-	.catch(function (error) {
-		console.error('Deu ruim', error);
-	});
+		console.timeEnd('medida-promise');
+	} catch (error) {
+		console.error('Deu Ruim', error);
+		
+	}
+}
+
+// const usuarioPromise = obterUsuario();
+// // para manipular o sucesso usammos a função .then
+// // para manipular erros, usamos o .catch
+// // usuario -> telefone ->
+// usuarioPromise
+// 	.then(function (usuario) {
+// 		console.time('medida-promise-old');
+// 		return obterTelefone(usuario.id)
+// 			.then(function resolverTelefone(result) {
+// 				return {
+// 					usuario: {
+// 						nome: usuario.nome,
+// 						id: usuario.id
+// 					},
+// 					telefone: result
+// 				}
+// 			});
+// 	})
+// 	.then(function (resultado) {
+// 		const endereco = obterEnderecoAsync(resultado.usuario.id);
+// 		return endereco.then(function resolverEndereco(result) {
+// 			return {
+// 				usuario: resultado.usuario,
+// 				telefone: resultado.telefone,
+// 				endereco: result
+// 			}
+// 		})
+		
+// 	})
+// 	.then(function (resultado) {
+// 		console.log(`
+// 			Nome: ${resultado.usuario.nome}
+// 			Endereco: ${resultado.endereco.rua}, ${resultado.endereco.numero}
+// 			Telefone: (${resultado.telefone.ddd}) ${resultado.telefone.telefone}
+// 		`);
+
+// 		console.timeEnd('medida-promise-old');
+// 	})
+// 	.catch(function (error) {
+// 		console.error('Deu ruim', error);
+// 	});
 
 // obterUsuario(function resolverUsuario(error, usuario) {
 // 	// null || "" || 0 === false
